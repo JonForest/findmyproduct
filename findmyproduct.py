@@ -3,7 +3,7 @@ from pprint import pprint
 from bs4 import BeautifulSoup
 from urllib.parse import quote_plus
 
-trademeUrl = 'https://www.trademe.co.nz/'
+trademeUrl = 'https://www.trademe.co.nz'
 
 class Result:
     def __init__(self, title, price, url):
@@ -18,8 +18,8 @@ def get_title_details(found_title):
     Returns a Result instance
     """
     try:
-        parent = list(found_title.parents)[3]
-        url = trademeUrl + parent.find('a')['href']
+        parent = list(found_title.parents)[2] # Will return an `a` tag
+        url = trademeUrl + parent['href']
         buy_now = getattr(parent.find(class_='listingBuyNowPrice'), 'string', None)
         current_bid = getattr(parent.find(class_='listingBidPrice'), 'string', None)
         return Result(found_title.string.strip(), buy_now or current_bid, url)
@@ -36,7 +36,7 @@ def output_details(results_list):
 
 
 def findbook(title):
-    page = requests.get(f'{trademeUrl}Browse/SearchResults.aspx?type=Search&searchType=193&searchString={quote_plus(title)}')
+    page = requests.get(f'{trademeUrl}/Browse/SearchResults.aspx?type=Search&searchType=193&searchString={quote_plus(title)}')
     soup = BeautifulSoup(page.content, 'html.parser')
     titles = soup(class_='title')
 
