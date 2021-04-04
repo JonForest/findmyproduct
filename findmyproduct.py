@@ -12,19 +12,22 @@ class Result:
         self.url = url
     
 
-def _get_title_details(found_title):
+def get_title_details(found_title):
     """
     Receives a BeautifulSoup node and retrieves the details from it
     Returns a Result instance
     """
-    parent = list(found_title.parents)[3]
-    url = trademeUrl + parent.find('a')['href']
-    buy_now = parent.find(class_='listingBuyNowPrice').string
-    current_bid = parent.find(class_='listingBidPrice').string
-    return Result(found_title.string.strip(), buy_now or current_bid, url)
+    try:
+        parent = list(found_title.parents)[3]
+        url = trademeUrl + parent.find('a')['href']
+        buy_now = getattr(parent.find(class_='listingBuyNowPrice'), 'string', None)
+        current_bid = getattr(parent.find(class_='listingBidPrice'), 'string', None)
+        return Result(found_title.string.strip(), buy_now or current_bid, url)
+    except AttributeError:
+        print(f'Not able to find details for {found_title.string}')
 
 
-def _output_details(results_list):
+def output_details(results_list):
     for result in results_list:
         print(f'Title: {result.title}')
         print(f'Price: {result.price}')
@@ -40,12 +43,27 @@ def findbook(title):
     results = []
     for found_title in titles:
         if title.lower() in found_title.string.strip().lower():
-            results.append(_get_title_details(found_title))
+            results.append(get_title_details(found_title))
 
-    _output_details(results)
+    return results
+
+
+def get_titles():
+    # Open up the file
+    with open('book_list.txt', mode='rt', encoding='utf-8') as f:
+        titles = [title.strip() for title in f.readlines()]
+
+    return titles
+
+
+def main():
+    book_titles = get_titles()
+    results = []
+    for title in book_titles:
+        results += findbook(title)
+
+    output_details(results)
+
 
 if __name__ == '__main__':
-    # findbook('From Zero to One')
-    # findbook('The Obstacle is the Way')
-    # findbook('Outliers')
-    findbook('DC Comics Zero Year')
+    main()
